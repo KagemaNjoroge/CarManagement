@@ -16,31 +16,30 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
+class Tag(TimeStampedModel):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class CarImage(TimeStampedModel):
+
+    image = models.ImageField(upload_to="car_images/")
+
+    def __str__(self):
+        return f"{self.image.name}"
+
+
 class Car(TimeStampedModel):
     owner = models.ForeignKey(
         get_user_model(), on_delete=models.CASCADE, related_name="cars"
     )
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    tags = models.JSONField(
-        default=dict
-    )  # Example: {"car_type": "SUV", "company": "Toyota", "dealer": "Dealer Name"}
+    tags = models.ManyToManyField(Tag, related_name="cars", blank=True)
+    images = models.ManyToManyField(CarImage, related_name="cars", blank=True)
 
     def __str__(self):
         return self.title
-
-
-class CarImage(TimeStampedModel):
-    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="car_images/")
-
-    def __str__(self):
-        return f"Image for {self.car.title}"
-
-    def clean(self):
-        validate_image_limit(self.car)
-        super().clean()
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Add Car
+{% endblock title %}
+{% block content %}
+
+<div class="container py-2 px-2">
+    <form method="POST" enctype="multipart/form-data" id="add_car">
+        {% csrf_token %}
+        <div class="text-end mb-2">
+            <button type="submit" class="btn btn-success">
+                <i class="fa fa-save"></i> Save
+            </button>
+        </div>
+        <div class="mb-3 form-floating">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="mb-3 form-floating">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" class="form-control" id="price" name="price" required>
+        </div>
+        <div class="mb-3 form-floating">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+        </div>
+        <!--Checkboxes group for tags passed in context-->
+        <div class="mb-3">
+            <label for="tags" class="form-label">Tags</label>
+            <div class="form-check">
+                {% for tag in tags %}
+                <input class="form-check input" type="checkbox" value="{{ tag.id }}" name="tags" id="tag{{ tag.id }}">
+                <label class="form-check label" for="tag{{ tag.id }}">{{ tag.name }}</label>
+                {% endfor %}
+            </div>
+            
+
+            <div class="mb-3">
+                <label for="images" class="form-label">Images</label>
+                <input type="file" class="form-control" id="images" name="images" multiple required>
+                <span id="file-limit-error" class="text-danger" style="display: none;">You can only upload up to 10
+                    images.</span>
+            </div>
+            <div id="image-preview" class="mb-3" style="max-height: 600px; overflow-y: auto;"></div>
+
+    </form>
+</div>
+
+<script>
+    // form submission with jquery and ajax
+    $(document).ready(function () {
+        $('#add_car').submit(function (event) {
+            event.preventDefault();
+            const form = $(this);
+            const formData = new FormData(form[0]);
+
+            $.ajax({
+                type: 'POST',
+                url: '/cars/',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    toastr.success('Car added successfully');
+                },
+                error: function (error) {
+                    console.log(error);
+                    toastr.error('An error occurred while adding the car');
+                }
+            });
+        });
+    });
+    document.getElementById('images').addEventListener('change', function (event) {
+        const imagePreview = document.getElementById('image-preview');
+        const fileLimitError = document.getElementById('file-limit-error');
+        const files = event.target.files;
+
+        if (files.length > 10) {
+            fileLimitError.style.display = 'block';
+            event.target.value = ''; // Clear the file input
+            imagePreview.innerHTML = ''; // Clear any existing images
+            return;
+        } else {
+            fileLimitError.style.display = 'none';
+        }
+
+        imagePreview.innerHTML = ''; // Clear any existing images
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '150px'; // Set the desired width
+                img.style.margin = '10px'; // Add some margin
+                imagePreview.appendChild(img);
+            };
+
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+
+{% endblock content %}
