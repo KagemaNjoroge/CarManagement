@@ -20,6 +20,11 @@ class CustomUserViewSet(ModelViewSet):
 from django.contrib.auth import logout
 
 
+def logout_page(request):
+    logout(request)
+    return redirect("auth/login/")
+
+
 @require_http_methods(["GET", "POST"])
 def login_page(request):
     if request.user.is_authenticated:
@@ -29,7 +34,6 @@ def login_page(request):
         if request.method == "GET":
             return render(request, "authentication/login.html")
         else:
-
             data = json.loads(request.body)
             username = data.get("username")
             password = data.get("password")
@@ -39,9 +43,11 @@ def login_page(request):
             if user is not None:
                 login(request, user)
 
-                return JsonResponse({"message": "success"})
+                return JsonResponse({"status": "success", "message": "Logged in!"})
             else:
-                return JsonResponse({"message": "Invalid email or password!"})
+                return JsonResponse(
+                    {"message": "Invalid email or password!", "status": "error"}
+                )
 
 
 @require_http_methods(["GET", "POST"])
@@ -59,6 +65,7 @@ def register_page(request):
         user = CustomUser.objects.create_user(
             username=username, email=email, password=password
         )
+        user.save()
 
         return JsonResponse({"message": "success"})
     else:
