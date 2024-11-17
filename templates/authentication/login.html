@@ -11,7 +11,8 @@
   <!--Bootstrap-->
   <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
 
-
+  <!--Toastr-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
 
 
   <link href="{%static 'custom.css'%}" rel="stylesheet">
@@ -27,23 +28,23 @@
 
 
   <main class="form-signin w-100 m-auto">
-    <form>
+    <form method="post" action="{%url 'authentication:login'%}" id="login" enctype="">
       <img class="mb-4" src="{%static 'bootstrap-logo.svg'%}" alt="" width="72" height="57">
       <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
 
       <div class="form-floating">
-        <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-        <label for="floatingInput">Email address</label>
+        <input type="text" class="form-control" id="floatingInput" placeholder="username" required>
+        <label for="floatingInput">Username</label>
       </div>
       <div class="form-floating">
-        <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+        <input type="password" class="form-control" id="floatingPassword" placeholder="Password" required>
         <label for="floatingPassword">Password</label>
       </div>
 
       <!--Link to signup page-->
       <a href="{% url 'authentication:register' %}" class="d-block mt-2 mb-2 small">Don't have an account? Sign
         up</a>
-      <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
+      <button class="btn btn-primary w-100 py-2" type="submit" id="loading">Sign in</button>
       <p class="mt-5 mb-3 text-body-secondary">&copy; Car Management Sys 2024</p>
     </form>
   </main>
@@ -53,6 +54,53 @@
   </script>
   <script src="{%static 'color-modes.js'%}"></script>
   <script src="{% static 'jquery-3.7.1.min.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      $("#login").submit(function (e) {
+        //call the login API
+        e.preventDefault();
+        var username = $("#floatingInput").val();
+        var password = $("#floatingPassword").val();
+
+
+
+        $('#loading').html(`<div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+        </div>`);
+        $.ajax({
+          type: "POST",
+          url: "{% url 'authentication:login' %}",
+          headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(
+            {
+              username: username,
+              password: password,
+              csrfmiddlewaretoken: '{{ csrf_token }}'
+            }
+          ),
+          success: function (response) {
+            if (response.status == "success") {
+              window.location.href = "{% url 'cars:home' %}";
+            } else {
+              toastr.error(response.message);
+            }
+          },
+          error: function (response) {
+            toastr.error("An error occurred");
+          },
+          complete: function () {
+            $('#loading').html("Sign in");
+          }
+
+        });
+      });
+    });
+  </script>
 </body>
 
 </html>
